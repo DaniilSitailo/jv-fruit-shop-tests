@@ -1,53 +1,70 @@
 package core.basesyntax;
 
-import core.basesyntax.model.FruitTransaction;
-import core.basesyntax.service.DataConverter;
-import core.basesyntax.service.FileReaderService;
-import core.basesyntax.service.FileWriterService;
-import core.basesyntax.service.ReportGenerator;
-import core.basesyntax.service.ShopService;
-import core.basesyntax.service.impl.DataConverterImpl;
-import core.basesyntax.service.impl.FileReaderServiceImpl;
-import core.basesyntax.service.impl.FileWriterServiceImpl;
-import core.basesyntax.service.impl.ReportGeneratorImpl;
-import core.basesyntax.service.impl.ShopServiceImpl;
-import core.basesyntax.strategy.BalanceOperation;
-import core.basesyntax.strategy.OperationHandler;
-import core.basesyntax.strategy.OperationStrategyImpl;
-import core.basesyntax.strategy.PurchaseOperation;
-import core.basesyntax.strategy.ReturnOperation;
-import core.basesyntax.strategy.SupplyOperation;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class Main {
-    private static final String INPUT_FILE_PATH = "reportToRead.csv";
-    private static final String OUTPUT_FILE_PATH = "finalReport";
+    public static void main(String[] args) {
+        if (args.length < 2) {
+            System.err.println("Usage: java Main <input_file> <output_file>");
+            return;
+        }
 
-    public static void main(String[] args) throws IOException {
-        FileReaderService fileReader = new FileReaderServiceImpl();
-        List<String> inputReport = fileReader.read(INPUT_FILE_PATH);
+        Path inputPath = Paths.get(args[0]);
+        Path outputPath = Paths.get(args[1]);
 
-        DataConverter dataConverter = new DataConverterImpl();
+        Map<String, Integer> fruitReport = new HashMap<>();
 
-        Map<FruitTransaction.Operation, OperationHandler> operationHandlers = new HashMap<>();
-        operationHandlers.put(FruitTransaction.Operation.BALANCE, new BalanceOperation());
-        operationHandlers.put(FruitTransaction.Operation.SUPPLY, new SupplyOperation());
-        operationHandlers.put(FruitTransaction.Operation.PURCHASE, new PurchaseOperation());
-        operationHandlers.put(FruitTransaction.Operation.RETURN, new ReturnOperation());
+        try {
+            List<String> lines = Files.readAllLines(inputPath);
 
-        OperationStrategyImpl operationStrategy = new OperationStrategyImpl(operationHandlers);
-        ShopService shopService = new ShopServiceImpl(operationStrategy);
+            for (int i = 1; i < lines.size(); i++) {
+                String line = lines.get(i).trim();
+                if (line.isEmpty()) {
+                    continue;
+                }
 
-        List<FruitTransaction> transactions = dataConverter.convertToTransaction(inputReport);
-        shopService.process(transactions);
+                String[] parts = line.split(",");
+                if (parts.length < 3) {
+                    continue;
+                }
 
-        ReportGenerator reportGenerator = new ReportGeneratorImpl();
-        String resultingReport = reportGenerator.getReport();
+                String type = parts[0].trim();
+                String fruit = parts[1].trim();
+                int quantity = Integer.parseInt(parts[2].trim());
 
-        FileWriterService fileWriter = new FileWriterServiceImpl();
-        fileWriter.write(resultingReport, OUTPUT_FILE_PATH);
+                fruitReport.putIfAbsent(fruit, 0);
+
+                if ("p".equals(type)) {
+                    fruitReport.put(fruit, fruitReport.get(fruit) - quantity);
+                } else {
+                    fruitReport.put(fruit, fruitReport.get(fruit) + quantity);
+                }
+            }
+
+            StringBuilder outputContent = new StringBuilder();
+            outputContent.append("fruit,quantity\n");
+
+            for (Map.Entry<String, Integer> entry : fruitReport.entrySet()) {
+                outputContent.append(entry.getKey())
+                        .append(",")
+                        .append(entry.getValue())
+                        .append("\n");
+            }
+
+            Files.writeString(outputPath, outputContent.toString());
+
+        } catch (IOException e) {
+            System.err.println("Error processing files: " + e.getMessage());
+            e.printStackTrace();
+        } catch (NumberFormatException e) {
+            System.err.println("Error parsing quantity: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }
