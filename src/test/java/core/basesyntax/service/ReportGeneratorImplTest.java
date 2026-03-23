@@ -1,26 +1,26 @@
-package core.basesyntax.service.impl;
+package core.basesyntax.service;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import core.basesyntax.db.Storage;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class ReportGeneratorImplTest {
 
-    @AfterEach
+    private ReportGeneratorImpl generator;
+
+    @BeforeEach
     void setUp() {
         Storage.inventory.clear();
+        generator = new ReportGeneratorImpl();
     }
 
     @Test
     void getReport_Ok() {
         Storage.setBalance("apple", 10);
         Storage.supply("banana", 5);
-
-        ReportGeneratorImpl generator = new ReportGeneratorImpl();
         String report = generator.getReport();
-
         assertTrue(report.contains("fruit,quantity"));
         assertTrue(report.contains("apple,10"));
         assertTrue(report.contains("banana,5"));
@@ -28,10 +28,8 @@ class ReportGeneratorImplTest {
 
     @Test
     void getReportEmpty_Ok() {
-        ReportGeneratorImpl generator = new ReportGeneratorImpl();
         String report = generator.getReport();
-
         assertTrue(report.contains("fruit,quantity"));
-        assertTrue(report.endsWith(System.lineSeparator()));
+        assertTrue(report.endsWith("\n"));
     }
 }

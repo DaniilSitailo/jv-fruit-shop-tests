@@ -13,11 +13,11 @@ import core.basesyntax.strategy.SupplyOperation;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class ShopServiceImplTest {
+
     private ShopService shopService;
 
     @BeforeEach
@@ -32,11 +32,6 @@ class ShopServiceImplTest {
 
         OperationStrategy strategy = new OperationStrategyImpl(handlers);
         shopService = new ShopServiceImpl(strategy);
-    }
-
-    @AfterEach
-    void tearDown() {
-        Storage.inventory.clear();
     }
 
     @Test

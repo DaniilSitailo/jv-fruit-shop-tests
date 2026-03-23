@@ -30,7 +30,6 @@ public class Main {
             return;
         }
 
-        // Dependency Injection
         FileReaderService fileReader = new FileReaderServiceImpl();
         DataConverter dataConverter = new DataConverterImpl();
         ReportGenerator reportGenerator = new ReportGeneratorImpl();
